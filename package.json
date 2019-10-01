@@ -1,0 +1,19 @@
+{
+  "name": "civintecreader",
+  "version": "1.0.0",
+  "description": "Protocol implementation for CN56 and CT9 reader",
+  "main": "lib/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Iot.Bzh",
+  "license": "ISC",
+  "dependencies": {
+    "ts-node": "^8.4.1",
+    "typescript": "^3.6.3"
+  },
+  "files": [
+    "lib/**/*"
+  ]
+}
