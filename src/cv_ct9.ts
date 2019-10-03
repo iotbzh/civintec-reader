@@ -1,9 +1,7 @@
-export class CV_CT9 {
-    tram: string;
-    constructor(message: string) {
-        this.tram = message;
-    }
-    setTram() {
-        return "Hello, " + this.tram;
+import { CV_Core } from "./cv_core";
+
+export class CV_CT9 extends CV_Core{
+    constructor() {
+        super();
     }
 }
