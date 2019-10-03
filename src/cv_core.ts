@@ -1,26 +1,29 @@
-export class CV_Core {
-    tram: string;
-    stx: string = '02';
-    etx: string = '03';
-    seq: string = '80';
-    dadd: string = '00';
-    data: string = '';
-    datalen: string = '';
-    time: string = '00';
-    bcc: string = '';
-    // Only from host to reader
-    cmd: string = '';
-    // Only from reader to host
-    status: string = '';
+import dgram = require('dgram');
+import {Observable} from 'rxjs';
 
-    dgram = require('dgram');
-    server = this.dgram.createSocket('udp4');
+const PORT = 2000;
+
+export class CV_Core {
+    private tram: string;
+    private stx: string = '02';
+    private etx: string = '03';
+    private seq: string = '80';
+    private dadd: string = '00';
+    private data: string = '';
+    private datalen: string = '';
+    private time: string = '00';
+    private bcc: string = '';
+    // Only from host to reader
+    private cmd: string = '';
+    // Only from reader to host
+    private status: string = '';
+
+    protected server = dgram.createSocket('udp4');
 
     constructor() {
-        this.tram = '';
     }
 
-    setFrame(commandString: string, command: string, data: string) {
+    setFrame(commandString: string, command: string, data: string): Buffer {
         this.data = data;
         this.cmd = command;
 
@@ -35,8 +38,23 @@ export class CV_Core {
         });
         this.bcc = bccLength.toString(16);
 
-        this.tram = this.stx + this.seq + this.dadd + this.cmd + this.datalen + this.time + this.data + this.bcc + this.etx;
-        return this.tram;
+        const tram = this.stx + this.seq + this.dadd + this.cmd + this.datalen + this.time + this.data + this.bcc + this.etx;
+        return Buffer.from(tram, 'hex');
+    }
+
+    sendFrame(ip: string, data: Buffer): Observable<any> {
+        return Observable.create((obs: any) => {
+            this.server.on('message', (dataSvr, sender) => {
+                // pass this information on for further processing?
+                obs.onNext({
+                    dataSvr,
+                    sender,
+                });
+                obs.onCompleted();  // close this observable so `.concat` switches to next request.
+            });
+
+            this.server.send(data, 0, data.length, PORT, ip);
+        });
     }
 
     getFrameDetail(frameString: string) {
