@@ -1,5 +1,6 @@
 import { CV_Core } from "./cv_core";
 import { Subject, Observable } from "rxjs";
+import { map } from "rxjs/operators";
 
 // ICVWiegandMode : used to config Wiegand mode reader
 export interface ICVWiegandMode {
@@ -9,46 +10,53 @@ export interface ICVWiegandMode {
 
 export interface ICardEvent {
     data: string;
-    errInfo: string;
+    rinfo: string;
 }
-
-// Example of Backend call
-// this.cardEvent$.subscribe(x => {
-//     console.log("data = ", x);
-// })
 
 export class CV_CN56 extends CV_Core {
 
-    cardEvent$ : Observable<ICardEvent>;
+    cardEvent$: Observable<ICardEvent>;
 
     private ip: string;
     private _cardEvent = new Subject<ICardEvent>();
+    private mode: ICVWiegandMode;
 
     constructor(
         ip: string,
+        mode: ICVWiegandMode,
         disableAutoConnect?: boolean
     ) {
         super();
         this.ip = ip;
+        this.mode = mode;
+
 
         this.cardEvent$ = this._cardEvent.asObservable();
+
         if (disableAutoConnect !== undefined) {
-            this.connect();
         }
+        this.connect(mode);
+    }
+
+    getIp(){
+        return this.ip;
     }
 
     /**
      * Connect
      */
-    connect() {
-        this.server.on('message', (msg: any, rinfo: any) => {
-                console.log('Mensaje recibido ' + msg.toString('hex'));
-                let dd = <ICardEvent>{
-                    data: msg,
-                    // errInfo: rinfo
-                };
-                this._cardEvent.next(dd);
-        });
+    connect(mode: ICVWiegandMode) {
+
+        if ('bindState' in this.server.bind === false) {
+
+            this.server.bind({
+                address: '172.25.50.62',
+                port: 2000,
+                exclusive: false
+            });
+        }
+
+        this.cardEvent$ = this.setWiegandModeObs(mode);
     }
 
     /**
@@ -56,6 +64,7 @@ export class CV_CN56 extends CV_Core {
      * @param mode
      */
     setWiegandMode(mode: ICVWiegandMode): Error {
+
         this.setWiegandModeObs(mode).subscribe((xx) => {
             return null;
         }, (err) => {
@@ -64,12 +73,18 @@ export class CV_CN56 extends CV_Core {
         return null;
     }
 
+     /**
+     * setWiegandMode - Config reader mode
+     * @param mode
+     */
+
+
     setWiegandModeObs(mode: ICVWiegandMode): Observable<any> {
 
         // Set default values
         let wiegandSetting: number[] = [
-            0x00, //wiegand_26
-            0x00, // indicate the block number for AutoRead
+            // 0x00, //wiegand_26
+            0x01, // indicate the block number for AutoRead
             0x26, //REQUEST mode 0x26 IDLE 0x52 ALL
             0x10, // buzzer 0x13 to bip each time a card is presented
 
@@ -87,12 +102,13 @@ export class CV_CN56 extends CV_Core {
 
         // Set values from ICVWiegandMode param
         if (mode.buzzer_led) {
-            wiegandSetting[3] |= 0x3;
+            wiegandSetting[2] |= 0x3;
+
         } else {
-            wiegandSetting[3] |= 0x1;
+            wiegandSetting[2] |= 0x1;
         }
         if (mode.cardBlockNumber) {
-            wiegandSetting[1] = mode.cardBlockNumber && 0xFF;
+            wiegandSetting[0] = Number(mode.cardBlockNumber.toString(16));
         }
 
         // Transformation of wiegandSetting (DATA) into a string frame
@@ -100,67 +116,23 @@ export class CV_CN56 extends CV_Core {
             return ('0' + element.toString(16)).slice(-2);
         }).toString().replace(/,/gi, '');
 
+        // Set the complete buffer frame following the UART protocol
+        // example of data returned <Buffer 02 80 00 29 0e 00 00 a7 03>
         const wiegandModeBuf = this.setFrame('CV_WiegandMode', '18', wiegandFrame);
 
+
+        // Return an Observable that contains the message to the reader to start the wiegandmode (autoread)
         return this.sendFrame(this.ip, wiegandModeBuf);
     }
 
-    // private wiegandModeUp() {
-
-    //     this.server.send(this.wiegandMode, 0, this.wiegandMode.byteLength, 2000, this.ip, function (err: any, bytes: any) {
-
-    //         if (err) {
-    //             console.log(err);
-    //         }
-    //         if (bytes != 21) {
-    //             console.warn('Frame was not correctly send');
-    //         }
-    //     });
-    // }
-
-    // connect(ipServer: string) {
-
-    //     if (this.server.bindState === undefined) {
-    //         this.server.bind({
-    //             address: ipServer,
-    //             port: 2000,
-    //             exclusive: false
-    //         });
-
-    //         this.server.on('listening', () => {
-    //             const address = this.server.address();
-    //             console.log(`server listening ${address.address}:${address.port}`);
-    //         });
-
-    //         this.wiegandModeUp();
-    //         this.server.on('message', (msg: any, rinfo: any) => {
-    //             console.log('Mensaje recibido ' + msg.toString('hex'));
-
-
-    //             if (msg.toString('hex') == '0000000000000000000000000000000f') {
-
-    //                 let readerIp = rinfo.address;
-
-    //                 this.server.send(this.wiegandMode, 0, this.wiegandMode.byteLength, 2000, readerIp, function (err: any, bytes: any) {
-    //                     if (err) {
-    //                         console.log(err);
-    //                     }
-    //                     if (bytes != 21) {
-    //                         console.warn('Frame was not correctly send');
-    //                     }
-    //                 });
-
-    //                 console.log(rinfo);
-    //             } else {
-    //                 // console.log('mess' + msg.toString('hex'));
-    //             }
-
-
-    //         });
-    //     }
-
-
-
-    //     return true;
-    // }
+    /**
+     *
+     * openRelay - Open the door
+     * @param CV_CN56
+     */
+    openRelay(){
+        const openRelayBuf = this.setFrame('CV_ReaderC_EXT', '29', '02', '02');
+        // this.sendFrame(this.ip, openRelayBuf).subscribe();
+        this.setWiegandModeObs(this.mode).subscribe();
+    }
 }

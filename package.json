@@ -5,8 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc",
-    "test": "tsc src/cv_test.ts && clear && nodemon --watch src/cv_test.ts",
-    "test2": "ts-node-dev --cls src/cv_test.ts && nodemon src/cv_test.js"
+    "test": "ts-node-dev --cls --respawn ./src/cv_test.ts --watch ./src/cv_test.ts, ./src/cv_cn56.ts "
   },
   "author": "Rodrigo Fernandez - Iot.Bzh",
   "license": "GPL-3.0",
@@ -19,8 +18,8 @@
   },
   "devDependencies": {
     "@types/node": "^12.7.8",
+    "nodemon": "^1.19.3",
     "ts-node": "^8.4.1",
-    "ts-node-dev": "^1.0.0-pre.43",
     "typescript": "^3.6.3"
   },
   "files": [
