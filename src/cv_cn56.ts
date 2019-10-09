@@ -1,87 +1,29 @@
-import { CV_Core } from "./cv_core";
-import { Subject, Observable } from "rxjs";
-import { AddressInfo } from "net";
-import * as cluster from 'cluster'
-
-// ICVWiegandMode : used to config Wiegand mode reader
-export interface ICVWiegandMode {
-    buzzer_led: boolean;         // set to true to bip and light up each time a card is presented
-    cardBlockNumber: number;    // block number to read on card (accepted value: 0 - 63)
-}
-
-export interface IreaderEvent {
-    data: Buffer;
-    rinfo: string;
-}
+import { CV_Core, ICVWiegandMode } from "./cv_core";
+import { CV_Server } from "./cv_server";
 
 export class CV_CN56 extends CV_Core {
 
-    readerEvent$: Observable<IreaderEvent>;
-
     private ip: string;
-    private _readerEvent = new Subject<IreaderEvent>();
     private mode: ICVWiegandMode;
 
     constructor(
+        server: CV_Server,
         ip: string,
         mode: ICVWiegandMode,
-        disableAutoConnect?: boolean
+        disableAutoConnect?: boolean,
     ) {
         super();
+        super.setServer(server);
+
         this.ip = ip;
         this.mode = mode;
 
+        this.setWiegandModeObs(mode, true);
 
-        this.readerEvent$ = this._readerEvent.asObservable();
-
-        if (disableAutoConnect !== undefined) {
-        }
-        this.connect(mode);
     }
 
     getIp() {
         return this.ip;
-    }
-
-    /**
-     * Connect
-     */
-    connect(mode: ICVWiegandMode) {
-        try {
-            this.mode = mode;
-
-            this.server.bind({
-                // address: '224.0.0.255',
-                address: '172.25.50.62',
-                port: 2000,
-                exclusive: true,
-            });
-
-            this.server.on('listening', () => {
-                var address = <AddressInfo>this.server.address();
-                console.log(address);
-                // this.server.setMulticastLoopback(true)
-                // this.server.setBroadcast(true);
-                // this.server.setMulticastTTL(128);
-                // this.server.addMembership(this.ip);
-            });
-
-            this.readerEvent$ = Observable.create((obs: any) => {
-                this.server.on('message', (data, rinfo) => {
-                    // pass this information on for further processing?
-                    obs.next({
-                        data,
-                        rinfo,
-                    });
-                });
-            });
-
-            this.setWiegandModeObs(mode, true);
-
-        } catch (error) {
-            console.log(error);
-        }
-
     }
 
     /**

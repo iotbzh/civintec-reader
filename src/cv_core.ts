@@ -1,6 +1,14 @@
 import * as dgram from 'dgram';
+import { CV_Server } from './cv_server';
 
 const PORT = 2000;
+
+
+// ICVWiegandMode : used to config Wiegand mode reader
+export interface ICVWiegandMode {
+    buzzer_led: boolean;         // set to true to bip and light up each time a card is presented
+    cardBlockNumber: number;    // block number to read on card (accepted value: 0 - 63)
+}
 
 export class CV_Core {
     private tram: string;
@@ -17,9 +25,13 @@ export class CV_Core {
     // Only from reader to host
     private status: string = '';
 
-    protected server = dgram.createSocket({'type' : 'udp4', 'reuseAddr' : true});
+    protected server: CV_Server;
 
     constructor() {}
+
+    protected setServer(server: CV_Server){
+        this.server = server;
+    }
 
     setFrame(commandString: string, command: string, data: string, datalen?: string): Buffer {
         this.data = data;
@@ -49,7 +61,6 @@ export class CV_Core {
     }
 
     sendFrame(ip: string, data: Buffer): any {
-
         this.server.send(data, 0, data.length, PORT, ip);
     }
 
