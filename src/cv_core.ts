@@ -1,5 +1,4 @@
 import * as dgram from 'dgram';
-import {Observable} from 'rxjs';
 
 const PORT = 2000;
 
@@ -18,10 +17,9 @@ export class CV_Core {
     // Only from reader to host
     private status: string = '';
 
-    protected server = dgram.createSocket('udp4');
+    protected server = dgram.createSocket({'type' : 'udp4', 'reuseAddr' : true});
 
-    constructor() {
-    }
+    constructor() {}
 
     setFrame(commandString: string, command: string, data: string, datalen?: string): Buffer {
         this.data = data;
@@ -31,7 +29,7 @@ export class CV_Core {
         if (datalen === undefined) {
             this.datalen = ('0'+commandString.length.toString(16)).slice(-2);
         } else {
-            this.datalen = ('0'+data).slice(-2);;
+            this.datalen = ('0'+datalen).slice(-2);
         }
 
         this.bcc = this.seq + this.dadd + this.cmd + this.datalen + this.time + this.data;
@@ -44,25 +42,15 @@ export class CV_Core {
 
 
 
-        const tram = this.stx + this.seq + this.dadd + this.cmd + this.datalen + this.time + this.data + this.bcc + this.etx;
+        const tram = this.stx + this.seq + this.dadd + this.cmd + this.datalen + this.status + this.time + this.data + this.bcc + this.etx;
+
 
         return Buffer.from(tram, 'hex');
     }
 
-    sendFrame(ip: string, data: Buffer): Observable<any> {
+    sendFrame(ip: string, data: Buffer): any {
 
-        return Observable.create((obs: any) => {
-            this.server.on('message', (data, rinfo) => {
-                // pass this information on for further processing?
-                obs.next({
-                    data,
-                    rinfo,
-                });
-                // obs.complete();  // close this observable so `.concat` switches to next request.
-            });
-
-            this.server.send(data, 0, data.length, PORT, ip);
-        });
+        this.server.send(data, 0, data.length, PORT, ip);
     }
 
     getFrameDetail(frameString: string) {
@@ -74,12 +62,13 @@ export class CV_Core {
             'dadd': split[4] + split[5],
             'datalen': split[6] + split[7],
             'status': split[8] + split[9],
-            'data': split.map((val, ind, spl) => { return (ind > 9 && ind < spl.length - 5) ? val : ',' }).toString().replace(/,/gi, ''),
+            'data': split.map((val, ind, spl) => { return (ind > 9 && ind < spl.length - 4) ? val : ',' }).toString().replace(/,/gi, ''),
             'bcc': split[split.length - 3] + split[split.length - 4],
             'etx': split[split.length - 2] + split[split.length - 1]
         };
         return splitFrame;
     }
+
     getFrameCmdDetail(frameString: string) {
         let split = frameString.split('');
 
@@ -94,8 +83,11 @@ export class CV_Core {
             'bcc': split[split.length - 4] + split[split.length - 3],
             'etx': split[split.length - 2] + split[split.length - 1]
         };
-        console.log(splitFrame);
 
         return splitFrame;
+    }
+
+    setTime(time: string){
+        this.time = time;
     }
 }
