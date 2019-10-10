@@ -7,10 +7,17 @@ import { CV_Server } from './cv_server';
  * @interface ICVWiegandMode
  */
 export interface ICVWiegandMode {
-    buzzer: boolean;         // set to true to bip and light up each time a card is presented
-    led: boolean;         // set to true to bip and light up each time a card is presented
+    buzzer: boolean;            // set to true to bip and light up each time a card is presented
+    led: boolean;               // set to true to bip and light up each time a card is presented
     cardBlockNumber: number;    // block number to read on card (accepted value: 0 - 63)
 }
+
+/**
+ *
+ *
+ * @export
+ * @class CV_Core
+ */
 export class CV_Core {
     private tram: string;
     private stx: string = '02';
@@ -30,21 +37,48 @@ export class CV_Core {
 
     constructor() {}
 
+    /**
+     * Set the created server as local variable
+     *
+     * @protected
+     * @param {CV_Server} server
+     * @memberof CV_Core
+     */
     protected setServer(server: CV_Server){
         this.server = server;
     }
 
+    /**
+     * UART Protocol logic to construct the frames
+     *
+     * @param {string} commandString - string command, e.g. 'CV_WiegandMode'.
+     * @param {string} command       - command hex number, e.g. '18'.
+     * @param {string} data          - each command has its own data configuration.
+     * @param {string} [datalen]     - some commands do not obtain the length from the commandString, so it is send.
+     * @returns {Buffer}             - final frame to send to the reader
+     * @memberof CV_Core
+     */
     setFrame(commandString: string, command: string, data: string, datalen?: string): Buffer {
-        this.data = data;
 
+        this.data = data;
         this.cmd = command;
 
+        // If the length of the command is not send, it is obtained from the length of the string
         if (datalen === undefined) {
             this.datalen = ('0'+commandString.length.toString(16)).slice(-2);
         } else {
+            // else, the datalen if formed with the given parameter.
             this.datalen = ('0'+datalen).slice(-2);
         }
-
+        /**
+         * Begin 'eight-bit block check sum' calculation.
+         *
+         * a. The calculation of the check sum includes all the bytes
+         *    within the package but excludes the STX, ETX
+         * b. The string concatenation (seq+dadd+cmd...) is transformed into a buffer
+         * c. The byte length of the buffer is calculated
+         * d. The final 'bcc' checksum is converted into an hexadecimal string
+         */
         this.bcc = this.seq + this.dadd + this.cmd + this.datalen + this.time + this.data;
         let hexArray = Buffer.from(this.bcc, 'hex');
         let bccLength = 0x00;
@@ -52,19 +86,36 @@ export class CV_Core {
             bccLength = bccLength ^ element;
         });
         this.bcc = ('0'+bccLength.toString(16)).slice(-2);
+        /**
+         * End of 'eight-bit block check sum' calculation.
+         */
 
+        // Final frame composition
+        const frame = this.stx + this.seq + this.dadd + this.cmd + this.datalen + this.status + this.time + this.data + this.bcc + this.etx;
 
-
-        const tram = this.stx + this.seq + this.dadd + this.cmd + this.datalen + this.status + this.time + this.data + this.bcc + this.etx;
-
-
-        return Buffer.from(tram, 'hex');
+        return Buffer.from(frame, 'hex');
     }
 
+    /**
+     * Send command frame to the reader
+     *
+     * @param {string} ip
+     * @param {number} port
+     * @param {Buffer} data
+     * @returns {*}
+     * @memberof CV_Core
+     */
     sendFrame(ip: string, port: number, data: Buffer): any {
         this.server.send(data, 0, data.length, port, ip);
     }
 
+    /**
+     * A detail split of the elements that form the command frame (server to reader)
+     *
+     * @param {string} frameString
+     * @returns - array of the command components
+     * @memberof CV_Core
+     */
     getFrameDetail(frameString: string) {
         let split = frameString.split('');
 
@@ -81,6 +132,13 @@ export class CV_Core {
         return splitFrame;
     }
 
+    /**
+     * A detail split of the elements that form the response frame (reader to server)
+     *
+     * @param {string} frameString
+     * @returns
+     * @memberof CV_Core
+     */
     getFrameCmdDetail(frameString: string) {
         let split = frameString.split('');
 
@@ -97,9 +155,5 @@ export class CV_Core {
         };
 
         return splitFrame;
-    }
-
-    setTime(time: string){
-        this.time = time;
     }
 }

@@ -13,6 +13,7 @@ export interface IreaderEvent {
     data: Buffer;
     rinfo: any;
 }
+
 /**
  *
  * @export
@@ -25,12 +26,12 @@ export class CV_Server{
     readers: any = {};
     config: any;
 
-    /**
-     * Creates an instance of CV_Server.
-     * @param {*} config
-     * @return CV_Server
-     */
-    constructor(config:any){
+   /**
+    *Creates an instance of CV_Server.
+    * @param {*} config
+    * @memberof CV_Server
+    */
+   constructor(config:any){
 
         this.config = config;
 
