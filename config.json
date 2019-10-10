@@ -1,0 +1,32 @@
+{
+    "serverConfig" : {
+        "ipAddress" : "172.25.50.62",
+        "port" : 2000
+    },
+    "readersConfig" : [
+        {
+            "type": "CN56",
+            "ip": "172.25.50.21",
+            "port": 2000,
+            "name" : "Reader Test",
+            "wiegandMode": {
+                "buzzer": false,
+                "led": true,
+                "cardBlockNumber": 1
+            },
+            "autoConnectReader" : true
+        },
+        {
+            "type": "CN56",
+            "ip": "172.25.50.29",
+            "port": 2000,
+            "name" : "Office 1",
+            "wiegandMode": {
+                "buzzer": false,
+                "led": true,
+                "cardBlockNumber": 1
+            },
+            "autoConnectReader" : true
+        }
+    ]
+}

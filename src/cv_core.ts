@@ -1,15 +1,16 @@
-import * as dgram from 'dgram';
 import { CV_Server } from './cv_server';
 
-const PORT = 2000;
-
-
-// ICVWiegandMode : used to config Wiegand mode reader
+/**
+ * ICVWiegandMode : used to config Wiegand mode reader
+ *
+ * @export
+ * @interface ICVWiegandMode
+ */
 export interface ICVWiegandMode {
-    buzzer_led: boolean;         // set to true to bip and light up each time a card is presented
+    buzzer: boolean;         // set to true to bip and light up each time a card is presented
+    led: boolean;         // set to true to bip and light up each time a card is presented
     cardBlockNumber: number;    // block number to read on card (accepted value: 0 - 63)
 }
-
 export class CV_Core {
     private tram: string;
     private stx: string = '02';
@@ -60,8 +61,8 @@ export class CV_Core {
         return Buffer.from(tram, 'hex');
     }
 
-    sendFrame(ip: string, data: Buffer): any {
-        this.server.send(data, 0, data.length, PORT, ip);
+    sendFrame(ip: string, port: number, data: Buffer): any {
+        this.server.send(data, 0, data.length, port, ip);
     }
 
     getFrameDetail(frameString: string) {
