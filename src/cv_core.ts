@@ -1,4 +1,5 @@
 import { CV_Server } from './cv_server';
+import { CV_CT9 } from './cv_ct9';
 
 /**
  * ICVWiegandMode : used to config Wiegand mode reader
@@ -34,6 +35,7 @@ export class CV_Core {
     private status: string = '';
 
     protected server: CV_Server;
+    protected socket: CV_CT9;
 
     constructor() {}
 
@@ -49,6 +51,17 @@ export class CV_Core {
     }
 
     /**
+     * Set the created CT9 socket as local variable
+     *
+     * @protected
+     * @param {CV_CT9} socket
+     * @memberof CV_Core
+     */
+    protected setCT9Socket(socket: CV_CT9){
+        this.socket = socket;
+    }
+
+    /**
      * UART Protocol logic to construct the frames
      *
      * @param {string} commandString - string command, e.g. 'CV_WiegandMode'.
@@ -58,7 +71,7 @@ export class CV_Core {
      * @returns {Buffer}             - final frame to send to the reader
      * @memberof CV_Core
      */
-    setFrame(commandString: string, command: string, data: string, datalen?: string): Buffer {
+    setNormalFrame(commandString: string, command: string, data: string, datalen?: string): Buffer {
 
         this.data = data;
         this.cmd = command;
@@ -116,7 +129,7 @@ export class CV_Core {
      * @returns - array of the command components
      * @memberof CV_Core
      */
-    getFrameDetail(frameString: string) {
+    getFrameDetailCN56(frameString: string) {
         let split = frameString.split('');
 
         let splitFrame = {
@@ -139,7 +152,7 @@ export class CV_Core {
      * @returns
      * @memberof CV_Core
      */
-    getFrameCmdDetail(frameString: string) {
+    getFrameCmdDetailCN56(frameString: string) {
         let split = frameString.split('');
 
         let splitFrame = {
@@ -150,6 +163,42 @@ export class CV_Core {
             'datalen': split[8] + split[9],
             'time': split[10] + split[11],
             'data': split.map((val, ind, spl) => { return (ind > 11 && ind < spl.length - 4) ? val : ',' }).toString().replace(/,/gi, ''),
+            'bcc': split[split.length - 4] + split[split.length - 3],
+            'etx': split[split.length - 2] + split[split.length - 1]
+        };
+
+        return splitFrame;
+    }
+
+    getFrameDetailCT9(frameString: string) {
+        let split = frameString.split('');
+
+        let splitFrame = {
+            'stx': split[0] + split[1],
+            'seq': split[2] + split[3],
+            'dadd': split[4] + split[5],
+            'datalen': split[6] + split[7],
+            'status': split[8] + split[9],
+            'data': split.map((val, ind, spl) => { return (ind > 9 && ind < spl.length - 4) ? val : ',' }).toString().replace(/,/gi, ''),
+            'bcc': split[split.length - 3] + split[split.length - 4],
+            'etx': split[split.length - 2] + split[split.length - 1]
+        };
+        return splitFrame;
+    }
+
+    getFrameCmdDetailCT9(frameString: string) {
+        let split = frameString.split('');
+
+        let splitFrame = {
+            'stx': split[0] + split[1],
+            'seq': split[2] + split[3],
+            'dadd': split[4] + split[5],
+            'xee': split[6] + split[7],
+            'cmd': split[8] + split[9],
+            'status': split[10] + split[11],
+            'datalen': split[12] + split[13],
+            'time': split[14] + split[15],
+            'data': split.map((val, ind, spl) => { return (ind > 15 && ind < spl.length - 4) ? val : ',' }).toString().replace(/,/gi, ''),
             'bcc': split[split.length - 4] + split[split.length - 3],
             'etx': split[split.length - 2] + split[split.length - 1]
         };

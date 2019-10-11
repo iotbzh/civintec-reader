@@ -27,6 +27,26 @@
                 "cardBlockNumber": 1
             },
             "autoConnectReader" : true
+        },
+        {
+            "type": "CT9",
+            "ip": "172.25.50.5",
+            "port": 2001,
+            "name" : "Test",
+            "wiegandMode": {
+                "cardBlockNumber": 1
+            },
+            "autoConnectReader" : true
+        },
+        {
+            "type": "CT9",
+            "ip": "172.25.50.4",
+            "port": 2001,
+            "name" : "Main Entrance",
+            "wiegandMode": {
+                "cardBlockNumber": 1
+            },
+            "autoConnectReader" : true
         }
     ]
 }
