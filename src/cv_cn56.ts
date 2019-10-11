@@ -1,6 +1,8 @@
 import { CV_Core, ICVWiegandMode } from "./cv_core";
 import { CV_Server, IreaderEventDgram } from "./cv_server";
 import { Observable, Subject } from "rxjs";
+import * as dgram from 'dgram';
+import { AddressInfo } from "net";
 
 /**
  * CV_CN56 class containing the functions to manage the reader
@@ -13,9 +15,13 @@ export class CV_CN56 extends CV_Core {
 
     private ip: string;
     private port: number;
+    private serverIp: string;
+    private serverPort: number;
     private mode: ICVWiegandMode;
     private _readerEvent = new Subject<IreaderEventDgram>();
     readerEvent$: Observable<IreaderEventDgram>;
+    private socket = dgram.createSocket({ 'type': 'udp4', 'reuseAddr': true });
+    private server: CV_Server;
 
     /**
      * Creates an instance of CV_CN56.
@@ -30,17 +36,22 @@ export class CV_CN56 extends CV_Core {
         ip: string,
         port: number,
         mode: ICVWiegandMode,
-        disableAutoConnect?: boolean,
+        disableAutoConnect: boolean,
+        serverIp: string,
+        serverPort: number
     ) {
         super();
-        super.setServer(server);
+        // super.setServer(server);
 
         this.ip = ip;
         this.port = port;
         this.mode = mode;
+        this.serverIp = serverIp;
+        this.serverPort = serverPort;
+        this.server = server;
 
         if (disableAutoConnect) {
-            this.setWiegandMode(mode, true);
+            this.connect();
         }
         // With this variable, the reader will have access to
         // its own events
@@ -54,18 +65,33 @@ export class CV_CN56 extends CV_Core {
      * @memberof CV_CN56
      */
     connect(){
-        this.setWiegandMode(this.mode, true);
-    }
 
-    /**
-     * The reader could access to its own listener events
-     * through readerEvent$.subscribe()
-     *
-     * @param {IreaderEventDgram} event
-     * @memberof CV_CN56
-     */
-    setReaderEvent(event: IreaderEventDgram){
-        this._readerEvent.next(event)
+        if (!this.server.getConnectionUDPInit()) {
+
+            this.socket.bind({
+                address: this.serverIp,
+                port: this.serverPort,
+                exclusive: true,
+            });
+            /**
+             * Once server is bound we check it is working
+             */
+            this.socket.on('listening', () => {
+                var address = <AddressInfo>this.socket.address();
+                console.log('Listening on UPD for Civintec reader model CN56 :', address.address + ':' + address.port);
+            });
+            this.socket.on('message', (data, rinfo) => {
+                // Send data to the general server subscribe()
+                // Here you have all the readers activity
+                this.server.setReaderEvent({data, rinfo});
+                // Send data to the specific reader which then it can subscribe()
+                // Here you filter the specific reader activity
+                this._readerEvent.next({data , rinfo});
+            });
+
+            this.server.setConnectionUDPInit(true);
+        }
+        this.setWiegandMode(this.mode, true);
     }
 
     /**
@@ -305,5 +331,9 @@ export class CV_CN56 extends CV_Core {
         }).toString().replace(/,/gi, '');
         let fram = this.setNormalFrame('CV_ActiveBuzzer', '26', data, '07');
         this.sendFrame(this.ip, this.port, fram);
+    }
+
+    sendFrame(ip: string, port: number, data: Buffer){
+        this.socket.send(data, 0, data.length, port, ip);
     }
 }

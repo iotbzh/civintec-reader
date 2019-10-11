@@ -34,8 +34,8 @@ export class CV_Core {
     // Only from reader to host
     private status: string = '';
 
-    protected server: CV_Server;
-    protected socket: CV_CT9;
+    // protected server: CV_Server;
+    // protected socket: CV_CT9;
 
     constructor() {}
 
@@ -46,9 +46,9 @@ export class CV_Core {
      * @param {CV_Server} server
      * @memberof CV_Core
      */
-    protected setServer(server: CV_Server){
-        this.server = server;
-    }
+    // protected setServer(server: CV_Server){
+    //     this.server = server;
+    // }
 
     /**
      * Set the created CT9 socket as local variable
@@ -57,9 +57,9 @@ export class CV_Core {
      * @param {CV_CT9} socket
      * @memberof CV_Core
      */
-    protected setCT9Socket(socket: CV_CT9){
-        this.socket = socket;
-    }
+    // protected setCT9Socket(socket: CV_CT9){
+    //     this.socket = socket;
+    // }
 
     /**
      * UART Protocol logic to construct the frames
@@ -109,18 +109,18 @@ export class CV_Core {
         return Buffer.from(frame, 'hex');
     }
 
-    /**
-     * Send command frame to the reader
-     *
-     * @param {string} ip
-     * @param {number} port
-     * @param {Buffer} data
-     * @returns {*}
-     * @memberof CV_Core
-     */
-    sendFrame(ip: string, port: number, data: Buffer): any {
-        this.server.send(data, 0, data.length, port, ip);
-    }
+    // /**
+    //  * Send command frame to the reader
+    //  *
+    //  * @param {string} ip
+    //  * @param {number} port
+    //  * @param {Buffer} data
+    //  * @returns {*}
+    //  * @memberof CV_Core
+    //  */
+    // sendFrame(ip: string, port: number, data: Buffer): any {
+    //     this.server.send(data, 0, data.length, port, ip);
+    // }
 
     /**
      * A detail split of the elements that form the command frame (server to reader)

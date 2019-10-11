@@ -62,8 +62,6 @@ export class CV_CT9 extends CV_Core{
 
             throw err;
         });
-
-        super.setCT9Socket(this.socket);
     }
 
     setWiegandMode(mode: ICVWiegandMode, complete: boolean): any {
