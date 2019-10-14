@@ -21,7 +21,6 @@ export interface IreaderEventDgram {
  */
 export class CV_Server {
 
-    private connectionUDPInit: boolean = false;
     private _readerEvent = new Subject<IreaderEventDgram>();
     readerEvent$: Observable<IreaderEventDgram>;
     readers: any = {};
@@ -59,31 +58,19 @@ export class CV_Server {
         });
 
     }
-
-    getConnectionUDPInit(){
-        return this.connectionUDPInit;
-    }
-
-    setConnectionUDPInit(value: boolean){
-        this.connectionUDPInit = value;
-    }
-
+    /**
+     * setReaderEvent - Track all readers activity available in this.readerEvent$.subscribe()
+     *
+     * @param {IreaderEventDgram} event
+     * @memberof CV_Server
+     */
     setReaderEvent(event: IreaderEventDgram){
         this._readerEvent.next(event);
+        // Send data to the specific reader which then it can subscribe()
+        // Here you filter the specific reader activity
+        let reader = this.getReaderCN56_Instance(event.rinfo.address);
+        reader.setReaderEvents(event);
     }
-
-    /**
-     * Rewrite the dgram.createSocket.send() function
-     *
-     * @param {Buffer} data - Buffer frame
-     * @param {number} offset
-     * @param {number} length
-     * @param {number} port
-     * @param {string} ip
-     */
-    // send(data: Buffer, offset: number, length: number, port: number, ip: string) {
-    //     this.serverCN56.send(data, 0, data.length, port, ip);
-    // }
 
     /**
      * Get an instance of the CN56 reader

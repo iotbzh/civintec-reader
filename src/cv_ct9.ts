@@ -3,12 +3,13 @@ import { CV_Server, IreaderEventDgram } from "./cv_server";
 import { Observable, Subject } from "rxjs";
 import * as net from 'net';
 
-export class CV_CT9 extends CV_Core{
+export class CV_CT9 extends CV_Core {
 
     private ip: string;
     private port: number;
     private mode: ICVWiegandMode;
-    protected socket: any;
+    private connected: boolean = false;
+    socket: any;
     private _readerEvent = new Subject<Buffer>();
     readerEvent$: Observable<Buffer>;
 
@@ -17,7 +18,7 @@ export class CV_CT9 extends CV_Core{
         ip: string,
         port: number,
         mode: ICVWiegandMode,
-        disableAutoConnect?: boolean,
+        autoConnect?: boolean,
     ) {
         super();
 
@@ -25,46 +26,35 @@ export class CV_CT9 extends CV_Core{
         this.port = port;
         this.mode = mode;
 
-        if (disableAutoConnect) {
-            this.setWiegandMode(mode, true);
+        if (autoConnect) {
+            this.connect();
         }
         // With this variable, the reader will have access to
         // its own events
         this.readerEvent$ = this._readerEvent.asObservable();
-        this.connect();
 
     }
 
-    connect(){
-        // let i1 = Buffer.from('02e07f4f2400008000001a00001a0000001000001100000000100000110000000010000011000000007503', 'hex');
-        // let i2 = Buffer.from('02f07f1810000000261255aa0326020000001000017a03', 'hex');
-        // let i3 = Buffer.from('02807fee0601000b006001ffffffffffff10006c03', 'hex');
-        // let i4 = Buffer.from('02a07f1d0100c303', 'hex');
-        // let i5 = Buffer.from('02b07f12020013cc03', 'hex');
-        // let open = Buffer.from('02907fec0b00030001010b03', 'hex');
-        // let close = Buffer.from('02907fec0b00130001010b03', 'hex');
-        this.socket = net.createConnection({ port: 8888, host: this.ip, localPort: this.port, localAddress: '172.25.50.62' }, () => {});
+    connect() {
+        this.socket = net.createConnection({ port: 8888, host: this.ip, localPort: this.port, localAddress: '172.25.50.62' }, () => {
+            this.connected = true;
+        });
 
         this.socket.on('connect', () => {
             console.log('New reader connection Civintec CT9:' + this.ip + ':' + this.port);
-            // socket.write(i1);
-            // socket.write(i2);
-            // socket.write(i3);
-            // socket.write(i4);
-            // socket.write(i5);
+            this.setWiegandMode(this.mode);
         });
         this.socket.on('data', (data: Buffer) => {
-            let answer = data.toString('hex');
-            console.log('Reader: '+ this.ip + ' data: ' + answer);
+            this._readerEvent.next(data);
         });
         this.socket.on('error', (err: any) => {
-            console.log('Hi error!');
-
+            console.log('this.socket.on(\'error\'). Trying to re connect to Reader ip: ' + this.ip);
+            // this.connect();
             throw err;
         });
     }
 
-    setWiegandMode(mode: ICVWiegandMode, complete: boolean): any {
+    setWiegandMode(mode: ICVWiegandMode): any {
 
         // Set default values
         let wiegandSetting: number[] = [
@@ -84,7 +74,6 @@ export class CV_CT9 extends CV_Core{
             0x00,
             0x00,
         ];
-        '0000261255aa030200000000100001'
 
         // Set values from ICVWiegandMode param
         if (mode.cardBlockNumber) {
@@ -100,6 +89,15 @@ export class CV_CT9 extends CV_Core{
         // example of data returned <Buffer 02 80 00 29 0e 00 00 a7 03>
         const wiegandModeBuf = this.setNormalFrame('CMD_WiegandMode', '18', wiegandFrame);
 
-        // this.sendFrame(this.ip, this.port, wiegandModeBuf);
+        this.sendFrame(wiegandModeBuf);
+    }
+
+    sendFrame(wiegandModeBuf: Buffer) {
+        try {
+            this.socket.write(wiegandModeBuf);
+        } catch (err) {
+            console.log('Problem sending CT9 frame.');
+            throw err;
+        }
     }
 }

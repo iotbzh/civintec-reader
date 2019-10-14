@@ -10,9 +10,29 @@
             "port": 2000,
             "name" : "Reader Test",
             "wiegandMode": {
-                "buzzer": false,
-                "led": true,
-                "cardBlockNumber": 1
+                "cardBlockNumber": 1,
+                "onAccessSuccessful":{
+                    "buzzer": false,
+                    "led": true,
+                    "soundPattern":{
+                        "firstBip": 1,
+                        "offFirstBip": 10,
+                        "secondBip": 0,
+                        "offSecondBip": 0,
+                        "cycle" : 1
+                    }
+                },
+                "onAccessDeny":{
+                    "buzzer": false,
+                    "led": true,
+                    "soundPattern":{
+                        "firstBip": 1,
+                        "offFirstBip": 1,
+                        "secondBip": 0,
+                        "offSecondBip": 0,
+                        "cycle" : 2
+                    }
+                }
             },
             "autoConnectReader" : true
         },
@@ -22,9 +42,29 @@
             "port": 2000,
             "name" : "Office 1",
             "wiegandMode": {
-                "buzzer": false,
-                "led": true,
-                "cardBlockNumber": 1
+                "cardBlockNumber": 1,
+                "onAccessSuccessful":{
+                    "buzzer": false,
+                    "led": true,
+                    "soundPattern":{
+                        "firstBip": 1,
+                        "offFirstBip": 10,
+                        "secondBip": 0,
+                        "offSecondBip": 0,
+                        "cycle" : 1
+                    }
+                },
+                "onAccessDeny":{
+                    "buzzer": false,
+                    "led": true,
+                    "soundPattern":{
+                        "firstBip": 1,
+                        "offFirstBip": 1,
+                        "secondBip": 1,
+                        "offSecondBip": 1,
+                        "cycle" : 1
+                    }
+                }
             },
             "autoConnectReader" : true
         },

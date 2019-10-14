@@ -36,7 +36,7 @@ export class CV_CN56 extends CV_Core {
         ip: string,
         port: number,
         mode: ICVWiegandMode,
-        disableAutoConnect: boolean,
+        autoConnect: boolean,
         serverIp: string,
         serverPort: number
     ) {
@@ -50,7 +50,7 @@ export class CV_CN56 extends CV_Core {
         this.serverPort = serverPort;
         this.server = server;
 
-        if (disableAutoConnect) {
+        if (autoConnect) {
             this.connect();
         }
         // With this variable, the reader will have access to
@@ -64,43 +64,27 @@ export class CV_CN56 extends CV_Core {
      *
      * @memberof CV_CN56
      */
-    connect(){
+    connect() {
 
-        if (!this.server.getConnectionUDPInit()) {
+        this.socket.bind({
+            address: this.serverIp,
+            port: this.serverPort,
+            exclusive: true,
+        });
+        /**
+         * Once server is bound we check it is working
+         */
+        this.socket.on('listening', () => {
+            var address = <AddressInfo>this.socket.address();
+            console.log('Listening on UPD for Civintec reader model CN56 :', address.address + ':' + address.port);
+        });
 
-            this.socket.bind({
-                address: this.serverIp,
-                port: this.serverPort,
-                exclusive: true,
-            });
-            /**
-             * Once server is bound we check it is working
-             */
-            this.socket.on('listening', () => {
-                var address = <AddressInfo>this.socket.address();
-                console.log('Listening on UPD for Civintec reader model CN56 :', address.address + ':' + address.port);
-            });
-            this.socket.on('message', (data, rinfo) => {
-                // Send data to the general server subscribe()
-                // Here you have all the readers activity
-                this.server.setReaderEvent({data, rinfo});
-                // Send data to the specific reader which then it can subscribe()
-                // Here you filter the specific reader activity
-                this._readerEvent.next({data , rinfo});
-            });
-
-            this.server.setConnectionUDPInit(true);
-        }
+        this.socket.on('message', (data, rinfo) => {
+            // Send data to the general server subscribe()
+            // Here you have all the readers activity
+            this.server.setReaderEvent({ data, rinfo });
+        });
         this.setWiegandMode(this.mode, true);
-    }
-
-    /**
-     *
-     * @returns the reader's ip address
-     * @memberof CV_CN56
-     */
-    getIp() {
-        return this.ip;
     }
 
     /**
@@ -153,13 +137,17 @@ export class CV_CN56 extends CV_Core {
         // if @param {boolean} complete is set to false
         // it will send only the wiegandmode frame
         if (!complete) {
-            this.sendFrame(this.ip, this.port,wiegandModeBuf);
+            this.sendFrame(this.ip, this.port, wiegandModeBuf);
         } else {
             // else it will send the two non documented frames necessary to set the wiegand mode
             this.sendFrame(this.ip, this.port, fixFrame1);
             this.sendFrame(this.ip, this.port, fixFrame2);
             this.sendFrame(this.ip, this.port, wiegandModeBuf);
         }
+    }
+
+    setReaderEvents(event: IreaderEventDgram){
+        this._readerEvent.next(event);
     }
 
     /**
@@ -170,6 +158,15 @@ export class CV_CN56 extends CV_Core {
     openRelay() {
         const openRelayBuf = this.setNormalFrame('CV_ReaderC_EXT', '29', '02', '02');
         this.sendFrame(this.ip, this.port, openRelayBuf);
+    }
+
+    /**
+     *
+     * @returns the reader's ip address
+     * @memberof CV_CN56
+     */
+    getIp() {
+        return this.ip;
     }
 
     /**
@@ -207,10 +204,10 @@ export class CV_CN56 extends CV_Core {
      * @memberof CV_CN56
      */
     open() {
-        if (this.mode.led) {
+        if (this.mode.onAccessSuccessful.led) {
             this.startLed('green');
         }
-        if (this.mode.buzzer) {
+        if (this.mode.onAccessSuccessful.buzzer) {
             this.bipAccess();
         }
         this.openRelay();
@@ -227,7 +224,7 @@ export class CV_CN56 extends CV_Core {
      * @memberof CV_CN56
      */
     close() {
-        if (this.mode.led) {
+        if (this.mode.onAccessSuccessful.led || this.mode.onAccessDeny.led) {
             this.stopLed();
         }
         this.setWiegandMode(this.mode, false);
@@ -242,10 +239,10 @@ export class CV_CN56 extends CV_Core {
      * @memberof CV_CN56
      */
     refuse() {
-        if (this.mode.led) {
+        if (this.mode.onAccessDeny.led) {
             this.startLed('red');
         }
-        if (this.mode.buzzer) {
+        if (this.mode.onAccessDeny.buzzer) {
             this.bipRefuse();
         }
         setTimeout(() => {
@@ -295,15 +292,16 @@ export class CV_CN56 extends CV_Core {
      * @memberof CV_CN56
      */
     bipRefuse() {
-        // This config makes 3 bips
+
         let dataN: number[] = [
-            0x04, // 0x04 allows to play a pattern
-            0x01, // Units of first on time. Each unit is 100ms.
-            0x01, // Units of first off time.
-            0x01, // Units of second on time.
-            0x01, // Units of second off time.
-            0x02  // Cycle
+            4,                                                  // 0x04 allows to play a pattern
+            this.mode.onAccessDeny.soundPattern.firstBip,       // Units of first on time. Each unit is 100ms.
+            this.mode.onAccessDeny.soundPattern.offFirstBip,    // Units of first off time.
+            this.mode.onAccessDeny.soundPattern.secondBip,      // Units of second on time.
+            this.mode.onAccessDeny.soundPattern.offSecondBip,   // Units of second off time.
+            this.mode.onAccessDeny.soundPattern.cycle           // Cycle
         ];
+
         let data = dataN.map((element) => {
             return ('0' + element.toString(16)).slice(-2);
         }).toString().replace(/,/gi, '');
@@ -317,14 +315,13 @@ export class CV_CN56 extends CV_Core {
      * @memberof CV_CN56
      */
     bipAccess() {
-        // This config makes 1 long bip
         let dataN: number[] = [
-            0x04,
-            0x01,
-            0x00,
-            0x01,
-            0x01,
-            0x01
+            4,                                                        // 0x04 allows to play a pattern
+            this.mode.onAccessSuccessful.soundPattern.firstBip,       // Units of first on time. Each unit is 100ms.
+            this.mode.onAccessSuccessful.soundPattern.offFirstBip,    // Units of first off time.
+            this.mode.onAccessSuccessful.soundPattern.secondBip,      // Units of second on time.
+            this.mode.onAccessSuccessful.soundPattern.offSecondBip,   // Units of second off time.
+            this.mode.onAccessSuccessful.soundPattern.cycle           // Cycle
         ];
         let data = dataN.map((element) => {
             return ('0' + element.toString(16)).slice(-2);
@@ -333,7 +330,7 @@ export class CV_CN56 extends CV_Core {
         this.sendFrame(this.ip, this.port, fram);
     }
 
-    sendFrame(ip: string, port: number, data: Buffer){
-        this.socket.send(data, 0, data.length, port, ip);
+    sendFrame(ip: string, port: number, data: Buffer) {
+        this.socket.send(data, 0, data.length, port, ip, () => {});
     }
 }

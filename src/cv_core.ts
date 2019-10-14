@@ -8,9 +8,17 @@ import { CV_CT9 } from './cv_ct9';
  * @interface ICVWiegandMode
  */
 export interface ICVWiegandMode {
-    buzzer: boolean;            // set to true to bip and light up each time a card is presented
-    led: boolean;               // set to true to bip and light up each time a card is presented
     cardBlockNumber: number;    // block number to read on card (accepted value: 0 - 63)
+    onAccessSuccessful: {
+        buzzer: boolean;            // set to true to bip and light up each time a card is presented
+        led: boolean;               // set to true to bip and light up each time a card is presented
+        soundPattern: any;
+    },
+    onAccessDeny: {
+        buzzer: boolean;            // set to true to bip and light up each time a card is presented
+        led: boolean;               // set to true to bip and light up each time a card is presented
+        soundPattern: any;
+    }
 }
 
 /**
