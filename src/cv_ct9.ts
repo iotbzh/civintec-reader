@@ -8,7 +8,7 @@ export class CV_CT9 extends CV_Core {
     private ip: string;
     private port: number;
     private mode: ICVWiegandMode;
-    private connected: boolean = false;
+    public active: boolean = false;
     socket: any;
     private _readerEvent = new Subject<Buffer>();
     readerEvent$: Observable<Buffer>;
@@ -18,7 +18,7 @@ export class CV_CT9 extends CV_Core {
         ip: string,
         port: number,
         mode: ICVWiegandMode,
-        autoConnect?: boolean,
+        autoConnect: boolean,
     ) {
         super();
 
@@ -37,7 +37,7 @@ export class CV_CT9 extends CV_Core {
 
     connect() {
         this.socket = net.createConnection({ port: 8888, host: this.ip, localPort: this.port, localAddress: '172.25.50.62' }, () => {
-            this.connected = true;
+            this.active = true;
         });
 
         this.socket.on('connect', () => {
@@ -48,9 +48,9 @@ export class CV_CT9 extends CV_Core {
             this._readerEvent.next(data);
         });
         this.socket.on('error', (err: any) => {
-            console.log('this.socket.on(\'error\'). Trying to re connect to Reader ip: ' + this.ip);
+            console.error('this.socket.on(\'error\'). Trying to re connect to Reader ip: ' + this.ip);
             // this.connect();
-            throw err;
+            // throw err;
         });
     }
 
@@ -92,12 +92,22 @@ export class CV_CT9 extends CV_Core {
         this.sendFrame(wiegandModeBuf);
     }
 
+    open(){
+        const openCommand = this.setExtendedCommand('CT_CMD_ Door', '0b', '01','01', '03', '00');
+        this.sendFrame(openCommand);
+    }
+
+    close(){
+        const closeCommand = this.setExtendedCommand('CT_CMD_ Door', '0b', '01','00', '03', '00');
+        this.sendFrame(closeCommand);
+    }
+
     sendFrame(wiegandModeBuf: Buffer) {
         try {
             this.socket.write(wiegandModeBuf);
         } catch (err) {
-            console.log('Problem sending CT9 frame.');
-            throw err;
+            console.error('Problem sending CT9 frame.');
+            // throw err;
         }
     }
 }

@@ -21,8 +21,8 @@ export interface IreaderEventDgram {
  */
 export class CV_Server {
 
-    private _readerEvent = new Subject<IreaderEventDgram>();
-    readerEvent$: Observable<IreaderEventDgram>;
+    private _CN56readerEvent = new Subject<IreaderEventDgram>();
+    CN56readerEvent$: Observable<IreaderEventDgram>;
     readers: any = {};
     config: any;
 
@@ -41,7 +41,7 @@ export class CV_Server {
        /**
          * Create an observable of the dgram "on('message')" function
          */
-        this.readerEvent$ = this._readerEvent.asObservable();
+        this.CN56readerEvent$ = this._CN56readerEvent.asObservable();
 
 
         /**
@@ -59,13 +59,13 @@ export class CV_Server {
 
     }
     /**
-     * setReaderEvent - Track all readers activity available in this.readerEvent$.subscribe()
+     * setReaderEvent - Track all readers activity available in this.CN56readerEvent$.subscribe()
      *
      * @param {IreaderEventDgram} event
      * @memberof CV_Server
      */
-    setReaderEvent(event: IreaderEventDgram){
-        this._readerEvent.next(event);
+    setCN56ReaderEvent(event: IreaderEventDgram){
+        this._CN56readerEvent.next(event);
         // Send data to the specific reader which then it can subscribe()
         // Here you filter the specific reader activity
         let reader = this.getReaderCN56_Instance(event.rinfo.address);

@@ -18,6 +18,7 @@ export class CV_CN56 extends CV_Core {
     private serverIp: string;
     private serverPort: number;
     private mode: ICVWiegandMode;
+    public active: boolean = false;
     private _readerEvent = new Subject<IreaderEventDgram>();
     readerEvent$: Observable<IreaderEventDgram>;
     private socket = dgram.createSocket({ 'type': 'udp4', 'reuseAddr': true });
@@ -82,7 +83,7 @@ export class CV_CN56 extends CV_Core {
         this.socket.on('message', (data, rinfo) => {
             // Send data to the general server subscribe()
             // Here you have all the readers activity
-            this.server.setReaderEvent({ data, rinfo });
+            this.server.setCN56ReaderEvent({ data, rinfo });
         });
         this.setWiegandMode(this.mode, true);
     }

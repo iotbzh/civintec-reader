@@ -48,28 +48,6 @@ export class CV_Core {
     constructor() {}
 
     /**
-     * Set the created server as local variable
-     *
-     * @protected
-     * @param {CV_Server} server
-     * @memberof CV_Core
-     */
-    // protected setServer(server: CV_Server){
-    //     this.server = server;
-    // }
-
-    /**
-     * Set the created CT9 socket as local variable
-     *
-     * @protected
-     * @param {CV_CT9} socket
-     * @memberof CV_Core
-     */
-    // protected setCT9Socket(socket: CV_CT9){
-    //     this.socket = socket;
-    // }
-
-    /**
      * UART Protocol logic to construct the frames
      *
      * @param {string} commandString - string command, e.g. 'CV_WiegandMode'.
@@ -117,18 +95,54 @@ export class CV_Core {
         return Buffer.from(frame, 'hex');
     }
 
-    // /**
-    //  * Send command frame to the reader
-    //  *
-    //  * @param {string} ip
-    //  * @param {number} port
-    //  * @param {Buffer} data
-    //  * @returns {*}
-    //  * @memberof CV_Core
-    //  */
-    // sendFrame(ip: string, port: number, data: Buffer): any {
-    //     this.server.send(data, 0, data.length, port, ip);
-    // }
+    setExtendedCommand(commandString: string, highCommand: string, lowCommand: string, data: string, datalen?: string, status?: string){
+        this.data = data;
+
+        // If the length of the command is not send, it is obtained from the length of the string
+        if (datalen === undefined) {
+            let hexLen = 0x00;
+            Buffer.from(this.time+this.status+data, 'hex').forEach( element => {
+                hexLen = hexLen ^ element;
+            });
+            this.datalen = ('0'+hexLen.toString(16)).slice(-2);
+
+        } else {
+            // else, the datalen if formed with the given parameter.
+            this.datalen = ('0'+datalen).slice(-2);
+        }
+
+        if (status !== undefined) {
+            this.status = status;
+        }
+        /**
+         * Begin 'eight-bit block check sum' calculation.
+         *
+         * a. The calculation of the check sum includes all the bytes
+         *    within the package but excludes the STX, ETX
+         * b. The string concatenation (seq+dadd+cmd...) is transformed into a buffer
+         * c. The byte length of the buffer is calculated
+         * d. The final 'bcc' checksum is converted into an hexadecimal string
+         */
+        this.bcc = this.seq + this.dadd + 'ec' + highCommand + this.status + this.datalen + this.time + this.data;
+        let hexArray = Buffer.from(this.bcc, 'hex');
+        let bccLength = 0x00;
+        hexArray.forEach(element => {
+            bccLength = bccLength ^ element;
+        });
+        this.bcc = ('0'+bccLength.toString(16)).slice(-2);
+
+        /**
+         * End of 'eight-bit block check sum' calculation.
+         */
+
+        // Final frame composition
+        const frame = this.stx + this.seq + this.dadd + 'ec' + highCommand + this.status + this.datalen + this.time + lowCommand + this.data + this.bcc + this.etx;
+        console.log(frame);
+
+
+
+        return Buffer.from(frame, 'hex');
+    }
 
     /**
      * A detail split of the elements that form the command frame (server to reader)
@@ -194,7 +208,7 @@ export class CV_Core {
         return splitFrame;
     }
 
-    getFrameCmdDetailCT9(frameString: string) {
+    getFrameExtendedCmdDetailCT9(frameString: string) {
         let split = frameString.split('');
 
         let splitFrame = {
@@ -202,11 +216,12 @@ export class CV_Core {
             'seq': split[2] + split[3],
             'dadd': split[4] + split[5],
             'xee': split[6] + split[7],
-            'cmd': split[8] + split[9],
+            'highCmd': split[8] + split[9],
             'status': split[10] + split[11],
             'datalen': split[12] + split[13],
             'time': split[14] + split[15],
-            'data': split.map((val, ind, spl) => { return (ind > 15 && ind < spl.length - 4) ? val : ',' }).toString().replace(/,/gi, ''),
+            'lowCmd': split[16] + split[17],
+            'data': split.map((val, ind, spl) => { return (ind > 17 && ind < spl.length - 4) ? val : ',' }).toString().replace(/,/gi, ''),
             'bcc': split[split.length - 4] + split[split.length - 3],
             'etx': split[split.length - 2] + split[split.length - 1]
         };
