@@ -42,9 +42,6 @@ export class CV_Core {
     // Only from reader to host
     private status: string = '';
 
-    // protected server: CV_Server;
-    // protected socket: CV_CT9;
-
     constructor() {}
 
     /**
@@ -111,6 +108,7 @@ export class CV_Core {
             this.datalen = ('0'+datalen).slice(-2);
         }
 
+        // Sometimes the 'status' property needs to be empty. Otherwise we send the value.
         if (status !== undefined) {
             this.status = status;
         }
@@ -137,9 +135,6 @@ export class CV_Core {
 
         // Final frame composition
         const frame = this.stx + this.seq + this.dadd + 'ec' + highCommand + this.status + this.datalen + this.time + lowCommand + this.data + this.bcc + this.etx;
-        console.log(frame);
-
-
 
         return Buffer.from(frame, 'hex');
     }
@@ -227,5 +222,30 @@ export class CV_Core {
         };
 
         return splitFrame;
+    }
+    /**
+     * Packet sequence number: this field acts as
+     * error control. Each packet sent from the Host
+     * associates with a sequence number that will be
+     * increased circularly. The reader returns the reply
+     * message with the same SEQ number. The HOST can check
+     * the SEQ for the occurrence of the ‘OUT of SEQUENCE’ error.
+     * Bit 7: Always set to ‘1’
+     * Bit 6-4: Sequence Number. Change from 0 to 7 cyclically.
+     * Bit 3-0: Extend Device Address.
+     *
+     * @memberof CV_Core
+     */
+    increaseSeq(){
+        if (this.seq == 'f0') {
+            this.seq = '80';
+        } else {
+            let seq = parseInt(this.seq, 16);
+            this.seq = (seq+0x10).toString(16);
+        }
+    }
+
+    getSeq(){
+        return this.seq;
     }
 }
