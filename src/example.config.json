@@ -1,7 +1,8 @@
 {
     "serverConfig" : {
         "ipAddress" : "172.25.50.62",
-        "port" : 2000
+        "cn56port" : 2000,
+        "ct9port" : 2001
     },
     "readersConfig" : [
         {

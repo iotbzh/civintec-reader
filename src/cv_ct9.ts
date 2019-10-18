@@ -15,6 +15,8 @@ export class CV_CT9 extends CV_Core {
 
     private ip: string;
     private port: number;
+    private serverIp: string;
+    private serverPort: number;
     private mode: ICVWiegandMode;
     public active: boolean = false;
     private socket: any;
@@ -37,12 +39,16 @@ export class CV_CT9 extends CV_Core {
         port: number,
         mode: ICVWiegandMode,
         autoConnect: boolean,
+        serverIp: string,
+        serverPort: number
     ) {
         super();
 
         this.ip = ip;
         this.port = port;
         this.mode = mode;
+        this.serverIp = serverIp;
+        this.serverPort = serverPort;
         this.server = server;
 
         if (autoConnect) {
@@ -61,7 +67,7 @@ export class CV_CT9 extends CV_Core {
      * @memberof CV_CT9
      */
     connect() {
-        this.socket = net.createConnection({ port: 8888, host: this.ip, localPort: this.port, localAddress: '172.25.50.62' }, () => {
+        this.socket = net.createConnection({ port: this.serverPort, host: this.ip, localPort: this.port, localAddress: this.serverIp }, () => {
             this.active = true;
         });
 

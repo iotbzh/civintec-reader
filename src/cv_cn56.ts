@@ -42,7 +42,6 @@ export class CV_CN56 extends CV_Core {
         serverPort: number
     ) {
         super();
-        // super.setServer(server);
 
         this.ip = ip;
         this.port = port;

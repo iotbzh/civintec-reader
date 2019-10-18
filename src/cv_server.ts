@@ -50,10 +50,10 @@ export class CV_Server {
         config.readersConfig.forEach((reader: any, index: number) => {
 
             if (reader.type === 'CN56') {
-                this.readers[reader.ip] = new CV_CN56(this, reader.ip, reader.port, reader.wiegandMode, reader.autoConnectReader, this.config.serverConfig.ipAddress, this.config.serverConfig.port);
+                this.readers[reader.ip] = new CV_CN56(this, reader.ip, reader.port, reader.wiegandMode, reader.autoConnectReader, this.config.serverConfig.ipAddress, this.config.serverConfig.cn56port);
             }
             if (reader.type === 'CT9') {
-                this.readers[reader.ip] = new CV_CT9(this, reader.ip, reader.port, reader.wiegandMode, reader.autoConnectReader);
+                this.readers[reader.ip] = new CV_CT9(this, reader.ip, reader.port, reader.wiegandMode, reader.autoConnectReader, this.config.serverConfig.ipAddress, this.config.serverConfig.ct9port);
             }
         });
 
