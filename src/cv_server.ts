@@ -7,9 +7,9 @@ import { CV_CT9 } from './cv_ct9';
  * Interface for all received data from dgram "on('message')" function
  *
  * @export
- * @interface IreaderEventDgram
+ * @interface IreaderEvent
  */
-export interface IreaderEventDgram {
+export interface IreaderEvent {
     data: Buffer;
     rinfo: any;
 }
@@ -21,8 +21,8 @@ export interface IreaderEventDgram {
  */
 export class CV_Server {
 
-    private _CN56readerEvent = new Subject<IreaderEventDgram>();
-    CN56readerEvent$: Observable<IreaderEventDgram>;
+    private _readerEvent = new Subject<IreaderEvent>();
+    readerEvent$: Observable<IreaderEvent>;
     readers: any = {};
     config: any;
 
@@ -41,7 +41,7 @@ export class CV_Server {
        /**
          * Create an observable of the dgram "on('message')" function
          */
-        this.CN56readerEvent$ = this._CN56readerEvent.asObservable();
+        this.readerEvent$ = this._readerEvent.asObservable();
 
 
         /**
@@ -59,17 +59,28 @@ export class CV_Server {
 
     }
     /**
-     * setReaderEvent - Track all readers activity available in this.CN56readerEvent$.subscribe()
+     * setReaderEvent - Track all readers activity available in this.readerEvent$.subscribe()
      *
-     * @param {IreaderEventDgram} event
+     * @param {IreaderEvent} event
      * @memberof CV_Server
      */
-    setCN56ReaderEvent(event: IreaderEventDgram){
-        this._CN56readerEvent.next(event);
+    setCN56ReaderEvent(event: IreaderEvent){
+        this._readerEvent.next(event);
         // Send data to the specific reader which then it can subscribe()
         // Here you filter the specific reader activity
         let reader = this.getReaderCN56_Instance(event.rinfo.address);
         reader.setReaderEvents(event);
+    }
+
+    /**
+     * setReaderEvent - Track all readers activity available in this.readerEvent$.subscribe()
+     *
+     * @param {IreaderEvent} event
+     * @memberof CV_Server
+     */
+    setCT9ReaderEvent(event: IreaderEvent){
+
+        this._readerEvent.next(event);
     }
 
     /**

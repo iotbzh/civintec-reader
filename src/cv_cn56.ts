@@ -1,5 +1,5 @@
 import { CV_Core, ICVWiegandMode } from "./cv_core";
-import { CV_Server, IreaderEventDgram } from "./cv_server";
+import { CV_Server, IreaderEvent } from "./cv_server";
 import { Observable, Subject } from "rxjs";
 import * as dgram from 'dgram';
 import { AddressInfo } from "net";
@@ -19,8 +19,8 @@ export class CV_CN56 extends CV_Core {
     private serverPort: number;
     private mode: ICVWiegandMode;
     public active: boolean = false;
-    private _readerEvent = new Subject<IreaderEventDgram>();
-    readerEvent$: Observable<IreaderEventDgram>;
+    private _readerEvent = new Subject<IreaderEvent>();
+    readerEvent$: Observable<IreaderEvent>;
     private socket = dgram.createSocket({ 'type': 'udp4', 'reuseAddr': true });
     private server: CV_Server;
 
@@ -67,6 +67,9 @@ export class CV_CN56 extends CV_Core {
      */
     connect() {
 
+        /**
+         * Bound the server with the ip address and port
+         */
         this.socket.bind({
             address: this.serverIp,
             port: this.serverPort,
@@ -77,19 +80,26 @@ export class CV_CN56 extends CV_Core {
          */
         this.socket.on('listening', () => {
             var address = <AddressInfo>this.socket.address();
-            console.log('Listening on UPD for Civintec reader model CN56 :', address.address + ':' + address.port);
+            console.log('Listening on UPD for Civintec reader model CN56 ['+this.ip+'] on', address.address + ':' + address.port);
         });
 
+        /**
+         * Once server is bound we set the 'listening events' function
+         */
         this.socket.on('message', (data, rinfo) => {
             // Send data to the general server subscribe()
-            // Here you have all the readers activity
+            // to have all the readers activity
             this.server.setCN56ReaderEvent({ data, rinfo });
         });
+
+        /**
+         * Set wiegand mode
+         */
         this.setWiegandMode(this.mode, true);
     }
 
     /**
-     *
+     * Set wiegand mode
      *
      * @param {ICVWiegandMode} mode
      * @param {boolean} complete
@@ -147,7 +157,14 @@ export class CV_CN56 extends CV_Core {
         }
     }
 
-    setReaderEvents(event: IreaderEventDgram){
+    /**
+     * From the CV_Server class events are filtered by ip and then
+     * set to the CV_CN56 reader instance.
+     *
+     * @param {IreaderEvent} event
+     * @memberof CV_CN56
+     */
+    setReaderEvents(event: IreaderEvent){
         this._readerEvent.next(event);
     }
 
@@ -331,7 +348,16 @@ export class CV_CN56 extends CV_Core {
         this.sendFrame(this.ip, this.port, fram);
     }
 
+    /**
+     * Send hexadecimal frame to the reader
+     *
+     * @param {string} ip
+     * @param {number} port
+     * @param {Buffer} data
+     * @memberof CV_CN56
+     */
     sendFrame(ip: string, port: number, data: Buffer) {
         this.socket.send(data, 0, data.length, port, ip, () => {});
+        this.increaseSeq();
     }
 }
