@@ -1,4 +1,4 @@
-import { CV_Core, ICVWiegandMode } from "./cv_core";
+import { CV_Core } from "./cv_core";
 import { CV_Server, IreaderEvent } from "./cv_server";
 import { Observable, Subject, throwError } from "rxjs";
 import { map, take, catchError } from "rxjs/operators";
@@ -17,7 +17,7 @@ export class CV_CT9 extends CV_Core {
     private port: number;
     private serverIp: string;
     private serverPort: number;
-    private mode: ICVWiegandMode;
+    private mode: any;
     public active: boolean = false;
     private socket: any;
     private _readerEvent = new Subject<IreaderEvent>();
@@ -37,7 +37,7 @@ export class CV_CT9 extends CV_Core {
         server: CV_Server,
         ip: string,
         port: number,
-        mode: ICVWiegandMode,
+        mode: any,
         autoConnect: boolean,
         serverIp: string,
         serverPort: number
@@ -95,30 +95,31 @@ export class CV_CT9 extends CV_Core {
      * @returns {*}
      * @memberof CV_CT9
      */
-    setWiegandMode(mode: ICVWiegandMode): any {
+    setWiegandMode(mode: any): any {
 
         // Set default values
         let wiegandSetting: number[] = [
             0x00, // wiegand_26
-            0x00, // indicate the block number for AutoRead
+            0x01, // indicate the block number for AutoRead
             0x26, // REQUEST mode 0x26 IDLE 0x52 ALL
-            0x13, // buzzer 0x13 to bip each time a card is presented
+            0x12, // buzzer 0x13 to bip each time a card is presented
 
             0x55, // Extra addition not documented
             0xAA, // Extra addition not documented
 
-            0x00, // Key format 0x00 8-bit keypad format 0x01 4-bit keypad format
-            0x2E, // Output slect
-            0xFF, // Block number of Wiegand data stored on the ISO15693 card. 0xFF basic mode, output card Inventory.
+            0x03, // Key format 0x00 8-bit keypad format 0x01 4-bit keypad format
+            0x06, // Output slect
+            0x01, // Block number of Wiegand data stored on the ISO15693 card. 0xFF basic mode, output card Inventory.
             0x00, // Card type 0x00 Mifare 1
             0x00,
             0x00,
+            0x10,
             0x00,
+            0x01,
         ];
 
-        // Set values from ICVWiegandMode param
-        if (mode.cardBlockNumber) {
-            wiegandSetting[1] = Number(mode.cardBlockNumber.toString(16));
+        if (mode.multipleBlockMode) {
+            wiegandSetting[14] = 0x00;
         }
 
         // Transformation of wiegandSetting (DATA) into a string frame
@@ -128,7 +129,7 @@ export class CV_CT9 extends CV_Core {
 
         // Set the complete buffer frame following the UART protocol
         // example of data returned <Buffer 02 80 00 29 0e 00 00 a7 03>
-        const wiegandModeBuf = this.setNormalFrame('CMD_WiegandMode', '18', wiegandFrame);
+        const wiegandModeBuf = this.setNormalCommand('CMD_WiegandMode', '18', wiegandFrame, '10');
 
         this.sendFrame(wiegandModeBuf);
     }
@@ -170,7 +171,7 @@ export class CV_CT9 extends CV_Core {
             map((x: any) => {
 
                 let data = x.data.toString('hex');
-                if (this.getFrameDetailCT9(data).seq === seq) {
+                if (this.getNormalFrameDetail(data).seq === seq) {
                     let firmware = x.data.toString('utf-8').replace(/[^\x20-\x7E]/g, '');
                     console.log('Firmware version ' + x.rinfo.address + ': ' + firmware);
                     return firmware;

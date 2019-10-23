@@ -2,7 +2,7 @@
     "serverConfig" : {
         "ipAddress" : "172.25.50.62",
         "cn56port" : 2000,
-        "ct9port" : 2001
+        "ct9port" : 8888
     },
     "readersConfig" : [
         {
@@ -38,54 +38,12 @@
             "autoConnectReader" : true
         },
         {
-            "type": "CN56",
-            "ip": "172.25.50.29",
-            "port": 2000,
-            "name" : "Office 1",
-            "wiegandMode": {
-                "cardBlockNumber": 1,
-                "onAccessSuccessful":{
-                    "buzzer": false,
-                    "led": true,
-                    "soundPattern":{
-                        "firstBip": 1,
-                        "offFirstBip": 10,
-                        "secondBip": 0,
-                        "offSecondBip": 0,
-                        "cycle" : 1
-                    }
-                },
-                "onAccessDeny":{
-                    "buzzer": false,
-                    "led": true,
-                    "soundPattern":{
-                        "firstBip": 1,
-                        "offFirstBip": 1,
-                        "secondBip": 1,
-                        "offSecondBip": 1,
-                        "cycle" : 1
-                    }
-                }
-            },
-            "autoConnectReader" : true
-        },
-        {
             "type": "CT9",
             "ip": "172.25.50.5",
             "port": 2001,
             "name" : "Test",
             "wiegandMode": {
-                "cardBlockNumber": 1
-            },
-            "autoConnectReader" : true
-        },
-        {
-            "type": "CT9",
-            "ip": "172.25.50.4",
-            "port": 2001,
-            "name" : "Main Entrance",
-            "wiegandMode": {
-                "cardBlockNumber": 1
+                "multipleBlockMode": false
             },
             "autoConnectReader" : true
         }
