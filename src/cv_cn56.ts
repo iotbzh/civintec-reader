@@ -142,7 +142,7 @@ export class CV_CN56 extends CV_Core {
 
         // Set the complete buffer frame following the UART protocol
         // example of data returned <Buffer 02 80 00 29 0e 00 00 a7 03>
-        const wiegandModeBuf = this.setNormalFrame('CV_WiegandMode', '18', wiegandFrame);
+        const wiegandModeBuf = this.setNormalCommand('CV_WiegandMode', '18', wiegandFrame);
 
         // if @param {boolean} complete is set to false
         // it will send only the wiegandmode frame
@@ -173,7 +173,7 @@ export class CV_CN56 extends CV_Core {
      * @memberof CV_CN56
      */
     openRelay() {
-        const openRelayBuf = this.setNormalFrame('CV_ReaderC_EXT', '29', '02', '02');
+        const openRelayBuf = this.setNormalCommand('CV_ReaderC_EXT', '29', '02', '02');
         this.sendFrame(this.ip, this.port, openRelayBuf);
     }
 
@@ -195,7 +195,7 @@ export class CV_CN56 extends CV_Core {
      * @memberof CV_CN56
      */
     getFirmwareVersion() {
-        const getVersionlNum = this.setNormalFrame('CV_GetVersionlNum', '0a', '00', '01');
+        const getVersionlNum = this.setNormalCommand('CV_GetVersionlNum', '0a', '00', '01');
         this.sendFrame(this.ip, this.port, getVersionlNum);
         this.setWiegandMode(this.mode, false);
     }
@@ -206,7 +206,7 @@ export class CV_CN56 extends CV_Core {
      * @memberof CV_CN56
      */
     getMac() {
-        const getMac = this.setNormalFrame('CV_GetMAC', '2b', '00', '01');
+        const getMac = this.setNormalCommand('CV_GetMAC', '2b', '00', '01');
         this.sendFrame(this.ip, this.port, getMac);
         this.setWiegandMode(this.mode, false);
     }
@@ -282,7 +282,7 @@ export class CV_CN56 extends CV_Core {
             return ('0' + element.toString(16)).slice(-2);
         }).toString().replace(/,/gi, '');
 
-        let fram = this.setNormalFrame('CV_ActiveLED', '24', data, '02');
+        let fram = this.setNormalCommand('CV_ActiveLED', '24', data, '02');
         this.sendFrame(this.ip, this.port, fram);
     }
 
@@ -299,7 +299,7 @@ export class CV_CN56 extends CV_Core {
         let data = dataN.map((element) => {
             return ('0' + element.toString(16)).slice(-2);
         }).toString().replace(/,/gi, '');
-        let fram = this.setNormalFrame('CV_ActiveLED', '24', data, '02');
+        let fram = this.setNormalCommand('CV_ActiveLED', '24', data, '02');
         this.sendFrame(this.ip, this.port, fram);
     }
 
@@ -322,7 +322,7 @@ export class CV_CN56 extends CV_Core {
         let data = dataN.map((element) => {
             return ('0' + element.toString(16)).slice(-2);
         }).toString().replace(/,/gi, '');
-        let fram = this.setNormalFrame('CV_ActiveBuzzer', '26', data, '07');
+        let fram = this.setNormalCommand('CV_ActiveBuzzer', '26', data, '07');
         this.sendFrame(this.ip, this.port, fram);
     }
 
@@ -343,7 +343,7 @@ export class CV_CN56 extends CV_Core {
         let data = dataN.map((element) => {
             return ('0' + element.toString(16)).slice(-2);
         }).toString().replace(/,/gi, '');
-        let fram = this.setNormalFrame('CV_ActiveBuzzer', '26', data, '07');
+        let fram = this.setNormalCommand('CV_ActiveBuzzer', '26', data, '07');
         this.sendFrame(this.ip, this.port, fram);
     }
 
