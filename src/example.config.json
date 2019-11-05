@@ -43,9 +43,10 @@
             "port": 2001,
             "name" : "Test",
             "wiegandMode": {
-                "multipleBlockMode": false
+                "multipleBlockMode": false,
+                "cardBlockNumber": 1
             },
-            "autoConnectReader" : true
+            "autoConnectReader" : false
         }
     ]
 }

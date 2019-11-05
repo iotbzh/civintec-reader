@@ -73,7 +73,10 @@ export class CV_CT9 extends CV_Core {
 
         this.socket.on('connect', () => {
             console.log('New reader connection Civintec CT9:' + this.ip + ':' + this.port);
-            this.setWiegandMode(this.mode);
+            this.loadKey(this.mode.cardBlockNumber);
+            setTimeout(() => {
+                this.setWiegandMode(this.mode);
+            }, 2000);
         });
         this.socket.on('data', (data: Buffer) => {
             let rinfo = { address: this.ip, port: this.port, size: data.byteLength }
@@ -83,8 +86,7 @@ export class CV_CT9 extends CV_Core {
         this.socket.on('error', (err: any) => {
             this.active = false;
             console.error('this.socket.on(\'error\'). Trying to re connect to Reader ip: ' + this.ip);
-            // this.connect();
-            // throw err;
+            console.log(err);
         });
     }
 
@@ -134,13 +136,40 @@ export class CV_CT9 extends CV_Core {
         this.sendFrame(wiegandModeBuf);
     }
 
+    loadKey(block: number) {
+        // Set default values
+        let loadKeySetting: number[] = [
+            0x60, // [00] 0x60: the Key will be stored as KEYA. 0x61: the Key will be stored as KEYB.
+            block, // [01] The sector number {0x00-0x0F}: where the key will be stored.
+            0xff, // [02] Data[2]—Data[7] Pointer to a 6-bytes buffer storing the uncoded key.string. (i.e. A0A1A2A3A4A5 )
+            0xff, // [03]
+            0xff, // [04]
+            0xff, // [05]
+            0xff, // [06]
+            0xff, // [07]
+            0x10, // [08] MifareLength
+            0x00  // [09] MifareOffset
+        ];
+        // Transformation of loadKeySetting (DATA) into a string frame
+        let loadKeyFrame = loadKeySetting.map((element) => {
+            return ('0' + element.toString(16)).slice(-2);
+        }).toString().replace(/,/gi, '');
+
+        // Set the complete buffer frame following the UART protocol
+        // example of data returned <Buffer 02 80 00 29 0e 00 00 a7 03>
+        const loadKeyModeBuf = this.setEECommand('ExCMD_MF_LoadKeyFromEE1', '0601', loadKeyFrame, '0b');
+
+        this.sendFrame(loadKeyModeBuf);
+
+    }
+
     /**
      * open relay - CMD_GPIO_CARD (Civintec command)
      *
      * @memberof CV_CT9
      */
     open() {
-        const openCommand = this.setExtendedCommand('CT_CMD_ Door', '0b', '01', '01', '03', '00');
+        const openCommand = this.setExtendedCommand('CT_CMD_ Door', '0b', '01', '01', '03');
         this.sendFrame(openCommand);
     }
 
@@ -150,7 +179,7 @@ export class CV_CT9 extends CV_Core {
      * @memberof CV_CT9
      */
     refuse() {
-        const closeCommand = this.setExtendedCommand('CT_CMD_ Door', '0b', '01', '00', '03', '00');
+        const closeCommand = this.setExtendedCommand('CT_CMD_ Door', '0b', '01', '00', '03');
         this.sendFrame(closeCommand);
     }
 
@@ -163,7 +192,7 @@ export class CV_CT9 extends CV_Core {
      * @memberof CV_CN56
      */
     getFirmwareVersion(): Observable<string> {
-        const getVersionNum = this.setExtendedCommand('GetVerNum', '0a', '01', '', '02', '00');
+        const getVersionNum = this.setExtendedCommand('GetVerNum', '0a', '01', '', '02');
         let seq = this.getSeq();
         this.sendFrame(getVersionNum);
         return this.readerEvent$.pipe(

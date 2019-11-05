@@ -40,7 +40,7 @@ export class CV_Core {
     // Only from host to reader
     private cmd: string = '';
     // Only from reader to host
-    private status: string = '';
+    private status: string = '00';
 
     constructor() {}
 
@@ -87,7 +87,7 @@ export class CV_Core {
          */
 
         // Final frame composition
-        const frame = this.stx + this.seq + this.dadd + this.cmd + this.datalen + this.status + this.time + this.data + this.bcc + this.etx;
+        const frame = this.stx + this.seq + this.dadd + this.cmd + this.datalen + this.time + this.data + this.bcc + this.etx;
 
         return Buffer.from(frame, 'hex');
     }
@@ -104,7 +104,7 @@ export class CV_Core {
      * @returns
      * @memberof CV_Core
      */
-    setExtendedCommand(commandString: string, highCommand: string, lowCommand: string, data: string, datalen?: string, status?: string){
+    setExtendedCommand(commandString: string, highCommand: string, lowCommand: string, data: string, datalen?: string){
         this.data = data;
 
         // If the length of the command is not send, it is obtained from the length of the string
@@ -120,10 +120,6 @@ export class CV_Core {
             this.datalen = ('0'+datalen).slice(-2);
         }
 
-        // Sometimes the 'status' property needs to be empty. Otherwise we send the value.
-        if (status !== undefined) {
-            this.status = status;
-        }
         /**
          * Begin 'eight-bit block check sum' calculation.
          *
@@ -162,7 +158,7 @@ export class CV_Core {
      * @returns
      * @memberof CV_Core
      */
-    setEECommand(commandString: string, command: string, data: string, datalen?: string, status?: string){
+    setEECommand(commandString: string, command: string, data: string, datalen?: string){
         this.data = data;
 
         // If the length of the command is not send, it is obtained from the length of the string
@@ -178,10 +174,6 @@ export class CV_Core {
             this.datalen = ('0'+datalen).slice(-2);
         }
 
-        // Sometimes the 'status' property needs to be empty. Otherwise we send the value.
-        if (status !== undefined) {
-            this.status = status;
-        }
         /**
          * Begin 'eight-bit block check sum' calculation.
          *
