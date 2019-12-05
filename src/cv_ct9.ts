@@ -93,7 +93,7 @@ export class CV_CT9 extends CV_Core {
      * @memberof CV_CT9
      */
     connect() {
-        this.socket = net.createConnection({ port: this.serverPort, host: this.ip, localPort: this.port, localAddress: this.serverIp }, () => {
+        this.socket = net.createConnection({ port: this.port, host: this.ip, localPort: this.serverPort, localAddress: this.serverIp }, () => {
             this.active = true;
         });
 
