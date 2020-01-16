@@ -101,7 +101,7 @@ export class CV_CT9 extends CV_Core {
             console.log('New reader connection Civintec CT9:' + this.ip + ':' + this.port);
             this.loadKey(this.mode.cardBlockNumber);
             setTimeout(() => {
-                this.setWiegandMode(this.mode);
+                this.setWiegandMode();
             }, 2000);
         });
         this.socket.on('data', (data: Buffer) => {
@@ -117,18 +117,27 @@ export class CV_CT9 extends CV_Core {
     }
 
     /**
+     * Destroy the socket to correctly restart it (if needed)
+     *
+     * @memberof CV_CT9
+     */
+    disconnect() {
+        this.socket.destroy();
+    }
+
+    /**
      * Set wiegand mode
      *
      * @param {ICVWiegandMode} mode
      * @returns {*}
      * @memberof CV_CT9
      */
-    setWiegandMode(mode: any): any {
+    setWiegandMode(): any {
 
         // Set default values
         let wiegandSetting: number[] = [
             0x00, // wiegand_26
-            0x01, // indicate the block number for AutoRead
+            this.mode.cardBlockNumber, // indicate the block number for AutoRead
             0x26, // REQUEST mode 0x26 IDLE 0x52 ALL
             0x12, // buzzer 0x13 to bip each time a card is presented
 
@@ -136,17 +145,17 @@ export class CV_CT9 extends CV_Core {
             0xAA, // Extra addition not documented
 
             0x03, // Key format 0x00 8-bit keypad format 0x01 4-bit keypad format
-            0x06, // Output slect
+            0x06, // Output select
             0x01, // Block number of Wiegand data stored on the ISO15693 card. 0xFF basic mode, output card Inventory.
             0x00, // Card type 0x00 Mifare 1
             0x00,
             0x00,
             0x10,
-            0x00,
+            0x10,
             0x01,
         ];
 
-        if (mode.multipleBlockMode) {
+        if (this.mode.multipleBlockMode) {
             wiegandSetting[14] = 0x00;
         }
 
