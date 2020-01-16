@@ -116,25 +116,41 @@ export class CV_CN56 extends CV_Core {
             // Send data to the general server subscribe()
             // to have all the readers activity
             this.server.setCN56ReaderEvent({ data, rinfo });
-
-            this.sendFrame(this.ip, this.port, Buffer.from('028000900800010100d2dd120e0b03','hex'));
         });
 
         this.socket.on('error', (error) => {
             this.active = false;
             console.log(error);
             console.log('Cannot listen on UPD for Civintec reader model CN56 ['+this.ip+']');
-        })
+        });
+
+        /**
+         * If there is a problem creating the connection between socket and device
+         */
         this.socket.on('connect', (error) => {
             this.active = false;
             console.log(error);
-            console.log('Connect');
-        })
+            console.log(this.ip + ': cannot make connection');
+        });
 
         /**
          * Set wiegand mode
          */
-        this.setWiegandMode(this.mode, true);
+        this.setWiegandMode(true);
+    }
+
+    /**
+     * Disconnect socket and device
+     *
+     * @memberof CV_CN56
+     */
+    disconnect() {
+        this.socket.close();
+        console.log(this.ip + ' disconnected');
+        /**
+         * With the 'createSocket' function later we can remake the connection using 'this.connect()'
+         */
+        this.socket = dgram.createSocket({ 'type': 'udp4', 'reuseAddr': true });
     }
 
     /**
@@ -145,7 +161,7 @@ export class CV_CN56 extends CV_Core {
      * @returns {*}
      * @memberof CV_CN56
      */
-    setWiegandMode(mode: ICVWiegandMode, complete: boolean): any {
+    setWiegandMode(complete?: boolean): any {
 
         // Set default values
         let wiegandSetting: number[] = [
@@ -171,8 +187,8 @@ export class CV_CN56 extends CV_Core {
         let fixFrame2 = Buffer.from('02b0004709006000ffffffffffff9e03', 'hex');
 
         // Set values from ICVWiegandMode param
-        if (mode.cardBlockNumber) {
-            wiegandSetting[1] = Number(mode.cardBlockNumber.toString(16));
+        if (this.mode.cardBlockNumber) {
+            wiegandSetting[1] = Number(this.mode.cardBlockNumber.toString(16));
         }
 
         // Transformation of wiegandSetting (DATA) into a string frame
@@ -237,7 +253,7 @@ export class CV_CN56 extends CV_Core {
     getFirmwareVersion() {
         const getVersionlNum = this.setNormalCommand('CV_GetVersionlNum', '0a', '00', '01');
         this.sendFrame(this.ip, this.port, getVersionlNum);
-        this.setWiegandMode(this.mode, false);
+        this.setWiegandMode(false);
     }
 
     /**
@@ -248,7 +264,7 @@ export class CV_CN56 extends CV_Core {
     getMac() {
         const getMac = this.setNormalCommand('CV_GetMAC', '2b', '00', '01');
         this.sendFrame(this.ip, this.port, getMac);
-        this.setWiegandMode(this.mode, false);
+        this.setWiegandMode(false);
     }
 
     /**
@@ -284,7 +300,7 @@ export class CV_CN56 extends CV_Core {
         if (this.mode.onAccessSuccessful.led || this.mode.onAccessDeny.led) {
             this.stopLed();
         }
-        this.setWiegandMode(this.mode, false);
+        this.setWiegandMode(false);
     }
 
     /**
