@@ -124,7 +124,7 @@ export class CV_CN56 extends CV_Core {
             this.server.setCN56ReaderEvent({ data, rinfo });
         });
 
-        this.socket.on('error', (error) => {
+        this.socket.on('error', (error:any) => {
             this.active = false;
             console.log(error);
             console.log('Cannot listen on UPD for Civintec reader model CN56 ['+this.ip+']');
@@ -133,7 +133,7 @@ export class CV_CN56 extends CV_Core {
         /**
          * If there is a problem creating the connection between socket and device
          */
-        this.socket.on('connect', (error) => {
+        this.socket.on('connect', (error:any) => {
             this.active = false;
             console.log(error);
             console.log(this.ip + ': cannot make connection');
