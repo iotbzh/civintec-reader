@@ -43,6 +43,8 @@ export class CV_CN56 extends CV_Core {
     private port: number;
     private serverIp: string;
     private serverPort: number;
+    public name: string;
+    public level: number;
     private mode: ICVWiegandMode;
     public active: boolean = false;
     private _readerEvent = new Subject<IreaderEvent>();
@@ -62,15 +64,19 @@ export class CV_CN56 extends CV_Core {
         server: CV_Server,
         ip: string,
         port: number,
+        name: string,
+        level: number,
         mode: ICVWiegandMode,
         autoConnect: boolean,
         serverIp: string,
-        serverPort: number
+        serverPort: number,
     ) {
         super();
 
         this.ip = ip;
         this.port = port;
+        this.name = name;
+        this.level = level;
         this.mode = mode;
         this.serverIp = serverIp;
         this.serverPort = serverPort;
@@ -229,7 +235,7 @@ export class CV_CN56 extends CV_Core {
      * @memberof CV_CN56
      */
     openRelay() {
-        const openRelayBuf = this.setNormalCommand('CV_ReaderC_EXT', '29', '02', '02');
+        const openRelayBuf = this.setNormalCommand('CV_ReaderC_EXT', '29', '05', '02');
         this.sendFrame(this.ip, this.port, openRelayBuf);
     }
 
@@ -286,7 +292,7 @@ export class CV_CN56 extends CV_Core {
         this.openRelay();
         setTimeout(() => {
             this.close();
-        }, 3000);
+        }, 5000);
     }
 
     /**
@@ -320,7 +326,7 @@ export class CV_CN56 extends CV_Core {
         }
         setTimeout(() => {
             this.close();
-        }, 3000);
+        }, 5000);
     }
 
     /**

@@ -10,8 +10,9 @@
             "ip": "172.25.50.21",
             "port": 2000,
             "name" : "Reader Test",
+            "level" : 1,
             "wiegandMode": {
-                "cardBlockNumber": 1,
+                "cardBlockNumber": 0,
                 "onAccessSuccessful":{
                     "buzzer": false,
                     "led": true,
@@ -35,7 +36,7 @@
                     }
                 }
             },
-            "autoConnectReader" : false
+            "autoConnectReader" : true
         },
         {
             "type": "CT9",
